@@ -604,9 +604,6 @@ subroutine total_scattering_opacity(neutrino_species,neutrino_energy,scattering_
   real*8 :: this_opacity
   integer :: transport
   
-  !temporary variables
-  real*8 :: crosssection
-  
   scattering_opacity = 0.0d0
   average_delta = 0.0d0
 
