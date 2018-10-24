@@ -997,7 +997,256 @@ module nulib
 
     end subroutine single_epannihil_kernel_point_return_all
 
+    
+    function sgnsquare(a)
+      implicit none
+      real*8 :: a, sgnsquare
+      sgnsquare = SIGN(a**2, a)
+    end function sgnsquare
 
+    ! equation D4c in Blaschke+Cirigliano 2016
+    function nu4_D4c(q1,q2,q3,q4) result(D4c) ! MeV^5
+      implicit none
+      real*8, intent(in) :: q1, q2, q3, q4
+      real*8 :: D4c
+      D4c = 1./60. * (q1**5 - 5.*q1**3*q2**2 + 5.*q1**2*q2**3 - q2**5 - 5.*q1**3*q3**2 + 5.*q2**3*q3**2 &
+           + 5.*q1**2*q3**3 + 5.*q2**2*q3**3 - q3**5 - 5.*q1**3*q4**2 + 5.*q2**3*q4**2 &
+           + 5.*q3**3*q4**2 + 5.*q1**2*q4**3 + 5.*q2**2*q4**3 + 5.*q3**2*q4**3 - q4**5)
+    end function nu4_D4c
+
+    !!====!!
+    !! D1 !!
+    !!====!!
+    function nu4_D1(qin1,qin2,qin3,qin4) result(D1)! MeV
+      implicit none
+      real*8, intent(in) :: qin1, qin2, qin3, qin4
+      real*8 :: q1, q2, q3, q4, D1
+
+      ! all results are symmetric on 1<-->2 and 3<-->4
+      ! use the case where q1>q2 and q3>q4
+      q1 = max(qin1,qin2)
+      q2 = min(qin1,qin2)
+      q3 = max(qin3,qin4)
+      q4 = min(qin3,qin4)
+
+      ! Case 1 (Eqns. D4)
+      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+         if(q1<=q2+q3+q4) then
+            D1 = 1./2.  * (q2+q3+q4-q1)
+         else
+            D1 = 0
+         end if
+
+         ! Case 2 (Eqns. D5)
+      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+         D1 = q4
+
+         ! Case 3 (Eqns. D6)
+      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+         if(q3<=q1+q2+q4) then
+            D1 =1./2. * (q1+q2+q4-q3)
+         else
+            D1 = 0
+         end if
+
+         ! Case 4 (Eqns. D7)
+      else !(q1+q2<q3+q4 .and. q1+q4>q2+q3)
+         D1 = q2
+      end if
+    end function nu4_D1
+
+    !!====!!
+    !! D2 !!
+    !!====!!
+    function nu4_D2(qin1,qin2,qin3,qin4) result(D2)! MeV^3
+      implicit none
+      real*8, intent(in) :: qin1, qin2, qin3, qin4
+      real*8 :: q1, q2, q3, q4, D2
+
+      ! all results are symmetric on 1<-->2 and 3<-->4
+      ! use the case where q1>q2 and q3>q4
+      q1 = max(qin1,qin2)
+      q2 = min(qin1,qin2)
+      q3 = max(qin3,qin4)
+      q4 = min(qin3,qin4)
+
+      ! Case 1 (Eqns. D4)
+      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+         if(q1<=q2+q3+q4) then
+            D2 = 1./12. * ((q1-q2)**3 + 2.*(q3**3+q4**3) &
+                 -3.*(q1-q2)*(q3**2+q4**2))
+         else
+            D2 = 0
+         end if
+
+         ! Case 2 (Eqns. D5)
+      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+         D2 = q4**3/3.
+
+         ! Case 3 (Eqns. D6)
+      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+         if(q3<=q1+q2+q4) then
+            D2 = 1./12. * (-(q1+q2)**3 - 2.*q3**3 + 2.*q4**3 &
+                 + 3.*(q1+q2)*(q3**2+q4**2))
+         else
+            D2 = 0
+         end if
+
+         ! Case 4 (Eqns. D7)
+      else !(q1+q2<q3+q4 .and. q1+q4>q2+q3)
+         D2 = q2/6. * (3.*q3**2 + 3.*q4**2 - 3.*q1**2 - q2**2)
+      end if
+
+    end function nu4_D2
+
+    !!====!!
+    !! D3 !!
+    !!====!!
+    function nu4_D3(qin1,qin2,qin3,qin4) result(D3)! MeV^5
+      implicit none
+      real*8, intent(in) :: qin1, qin2, qin3, qin4
+      real*8 :: q1, q2, q3, q4, D3
+      real*8 :: D4c ! function declaration
+
+      ! all results are symmetric on 1<-->2 and 3<-->4
+      ! use the case where q1>q2 and q3>q4
+      q1 = max(qin1,qin2)
+      q2 = min(qin1,qin2)
+      q3 = max(qin3,qin4)
+      q4 = min(qin3,qin4)
+
+      ! Case 1 (Eqns. D4)
+      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+         if(q1<=q2+q3+q4) then
+            D3 = nu4_D4c(q1,q2,q3,q4)
+         else
+            D3 = 0.
+         end if
+
+         ! Case 2 (Eqns. D5)
+      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+         D3 = q4**3/30. * (5.*q1**2 + 5.*q2**2 + 5.*q3**2 - q4**2)
+
+         ! Case 3 (Eqns. D6)
+      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+         if(q3<=q1+q2+q4) then
+            D3 = nu4_D4c(q3,q4,q1,q2)
+         else
+            D3 = 0        
+         end if
+
+         ! Case 4 (Eqns. D7)
+      else !(q1+q2<q3+q4 .and. q1+q4>q2+q3)
+         D3 = q2**3/30. * (5.*q1**2 + 5.*q3**2 + 5.*q4**2 - q2**2)
+      end if
+
+    end function nu4_D3
+
+    !!=============================!!
+    !! nu+nu <--> nu+nu scattering !!
+    !!=============================!!
+    ! second line in Blaschke & Cirigliano 2016 Equation 96
+    ! technically applicable only in isotropic limit
+    subroutine nu4scat_kernel(nu4scattable)
+      implicit none
+
+      real*8, dimension(:,:,:), intent(out) :: nu4scattable
+      integer :: ik, i1, i2, i3
+      real*8  ::  k, q1, q2, q3
+      real*8 :: D1, D2, D3 ! function declarations
+
+      nu4scattable = 0.
+      
+      do ik=1,number_groups
+         k = energies(ik)
+         if (abs(ik*energies(1)-k)/k > 1e-5) then
+            stop "nu4scat requires even energy binning"
+         endif
+         do i1=1,number_groups
+            q1 = energies(i1)
+            do i3=1,number_groups
+               q3 = energies(i3)
+
+               ! group of neutrino 2
+               ! Assumes even energy spacing
+               i2 = i1+i3-ik
+
+               ! result is MeV^5
+               if (i2>0 .and. i2<=number_groups) then
+                  q2 = energies(i2)
+                  nu4scattable(i3,i1,ik) = (nu4_D3(q1,q2,q3,k ) &
+                       + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k ) &
+                       + q2 * k           * nu4_D2(q2,k ,q1,q3) &
+                       + q1 * q3          * nu4_D2(q1,q3,q2,k ) )&
+                       * bin_widths(i1) * bin_widths(i3) / k**2
+                  if(nu4scattable(i3,i1,ik)<0) then
+                     write(*,*) ik, i1, i2, i3, nu4scattable(i3,i1,ik)
+                     stop "nu4scattable value less than 0"
+                  end if
+               else
+                  nu4scattable(i3,i1,ik) = 0.
+               endif
+            end do
+         end do
+      end do
+
+      ! convert to 1/cm
+      nu4scattable = nu4scattable * 2. * Gfermi**2 / (2.*pi)**3 / hbarc_mevcm
+
+    end subroutine nu4scat_kernel
+
+    !!=====================================!!
+    !! nu+nubar <--> nu+nubar annihilation !!
+    !!=====================================!!
+    ! fourth line in Blaschke & Cirigliano 2016 Equation 96
+    ! technically applicable only in isotropic limit
+    subroutine nu4pair_kernel(nu4pairtable)
+      implicit none
+
+      real*8, dimension(:,:,:), intent(out) :: nu4pairtable
+      integer :: ik, i1, i2, i3
+      real*8  ::  k, q1, q2, q3
+      real*8 :: D1, D2, D3 ! function declarations
+
+      nu4pairtable = 0.
+
+      do ik=1,number_groups
+         k = energies(ik)
+         if (abs(ik*energies(1)-k)/k > 1e-5) then
+            stop "nu4pair requires even energy binning"
+         endif
+         do i1=1,number_groups
+            q1 = energies(i1)
+            do i3=1,number_groups
+               q3 = energies(i3)
+
+               ! group of neutrino 2
+               ! Assumes even energy spacing
+               i2 = i1+i3-ik
+
+               ! result is MeV^5
+               if (i2>0 .and. i2<=number_groups) then
+                  q2 = energies(i2)
+                  nu4pairtable(i3,i1,ik) = (nu4_D3(q1,q2,q3,k )  &
+                       + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k )  &
+                       - q1 * k           * nu4_D2(q1,k ,q2,q3)  &
+                       - q2 * q3          * nu4_D2(q2,q3,q1,k ) )&
+                       * bin_widths(i1) * bin_widths(i3) / k**2
+                  if(nu4pairtable(i3,i1,ik)<0) then
+                     write(*,*) ik, i1, i2, i3, nu4pairtable(i3,i1,ik)
+                     stop "nu4pairtable value less than 0"
+                  end if
+               else
+                  nu4pairtable(i3,i1,ik) = 0.
+               endif
+            end do
+         end do
+      end do
+
+      ! convert to 1/cm
+      nu4pairtable = nu4pairtable * 2. * Gfermi**2 / (2.*pi)**3 / hbarc_mevcm
+
+    end subroutine nu4pair_kernel
  end module nulib
 
 

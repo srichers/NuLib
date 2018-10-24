@@ -1,5 +1,6 @@
 !-*-f90-*-
-subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels,include_scattering_delta)
+subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernels,include_scattering_delta,&
+     include_nu4scat,include_nu4pair)
   
   use nulibtable
   use hdf5
@@ -10,10 +11,14 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
   logical,optional :: include_Ielectron
   logical,optional :: include_epannihil_kernels
   logical,optional :: include_scattering_delta
+  logical,optional :: include_nu4scat
+  logical,optional :: include_nu4pair
   
   logical :: read_Ielectron
   logical :: read_epannihil
   logical :: read_delta
+  logical :: read_nu4scat
+  logical :: read_nu4pair
   
   !H5 stuff
   integer :: error,rank,cerror
@@ -43,6 +48,18 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
      read_delta = include_scattering_delta
   else
      read_delta = .false.
+  endif
+
+  if(present(include_nu4scat)) then
+     read_nu4scat = include_nu4scat
+  else
+     read_nu4scat = .false.
+  endif
+
+  if(present(include_nu4pair)) then
+     read_nu4pair = include_nu4pair
+  else
+     read_nu4pair = .false.
   endif
 
   cerror = 0
@@ -382,6 +399,25 @@ subroutine nulibtable_reader(filename,include_Ielectron,include_epannihil_kernel
 
      deallocate(nulibtable_temp2)
 
+  endif
+
+  !4-neutrino processes
+  dims3(1) = nulibtable_number_groups
+  dims3(2) = nulibtable_number_groups
+  dims3(3) = nulibtable_number_groups
+  if(read_nu4scat) then
+     allocate(nulibtable_nu4scat(dims3(1),dims3(2),dims3(3)))
+     call h5dopen_f(file_id, "nu4scat_kernel", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_nu4scat, dims3, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
+  endif
+  if(read_nu4pair) then
+     allocate(nulibtable_nu4pair(dims3(1),dims3(2),dims3(3)))
+     call h5dopen_f(file_id, "nu4pair_kernel", dset_id, error)
+     call h5dread_f(dset_id, H5T_NATIVE_DOUBLE,nulibtable_nu4pair, dims3, error)
+     call h5dclose_f(dset_id, error)
+     cerror = cerror + error   
   endif
 
   !must close h5 files, check for error

@@ -65,6 +65,8 @@ program make_table_example
   real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi0 !for ep-annihilation kernels, need both production and destruction kernels
   real*8, allocatable,dimension(:,:,:,:,:,:) :: epannihiltable_Phi1 !for ep-annihilation kernels, need both production and destruction kernels
 
+  !four-neutrino processes
+  real*8, allocatable, dimension(:,:,:) :: nu4scattable, nu4pairtable
 
   !versioning
   real*8 :: timestamp
@@ -717,6 +719,21 @@ program make_table_example
 
   endif
 
+  !!=============================!!
+  !! nu+nu<-->nu+nu interactions !!
+  !!=============================!!
+  ! generate neutrino-neutrino scattering kernel
+  if (add_nu4scat_kernel) then
+     allocate(nu4scattable(mytable_number_groups,mytable_number_groups,&
+          mytable_number_groups))
+     call nu4scat_kernel(nu4scattable)
+  endif
+  if (add_nu4pair_kernel) then
+     allocate(nu4pairtable(mytable_number_groups,mytable_number_groups,&
+          mytable_number_groups))
+     call nu4pair_kernel(nu4pairtable)
+  endif
+  
   !write out table in H5 format
 #ifdef __MPI__
   !only the first mpi node should write
@@ -1045,6 +1062,35 @@ contains
 
     endif
 
+    if (add_nu4scat_kernel) then
+       rank = 3
+       dims3(1) = number_groups
+       dims3(2) = number_groups
+       dims3(3) = number_groups
+       
+       call h5screate_simple_f(rank, dims3, dspace_id, error)
+       call h5dcreate_f(file_id, "nu4scat_kernel", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,nu4scattable, dims3, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)
+       cerror = cerror + error
+    endif
+
+    if (add_nu4pair_kernel) then
+       rank = 3
+       dims3(1) = number_groups
+       dims3(2) = number_groups
+       dims3(3) = number_groups
+       
+       call h5screate_simple_f(rank, dims3, dspace_id, error)
+       call h5dcreate_f(file_id, "nu4pair_kernel", H5T_NATIVE_DOUBLE, &
+            dspace_id, dset_id, error)
+       call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE,nu4pairtable, dims3, error)
+       call h5dclose_f(dset_id, error)
+       call h5sclose_f(dspace_id, error)
+       cerror = cerror + error
+    endif
 
     !must close h5 files, check for error
     if (cerror.ne.0) then

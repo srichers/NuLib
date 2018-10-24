@@ -83,3 +83,7 @@
   logical :: add_anumu_kernel_epannihil = .false.
   logical :: add_nutau_kernel_epannihil = .false.
   logical :: add_anutau_kernel_epannihil = .false.
+
+  !neutrino-neutrino scattering kernel
+  logical :: add_nu4scat_kernel = .false.
+  logical :: add_nu4pair_kernel = .false.

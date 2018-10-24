@@ -29,6 +29,9 @@ module nulibtable
   real*8, allocatable,save :: nulibtable_epannihiltable_Phi0(:,:,:)
   real*8, allocatable,save :: nulibtable_epannihiltable_Phi1(:,:,:)
 
+  real*8, allocatable,save :: nulibtable_nu4scat(:,:,:)
+  real*8, allocatable,save :: nulibtable_nu4pair(:,:,:)
+  
   integer, save :: nulibtable_nrho
   integer, save :: nulibtable_ntemp
   integer, save :: nulibtable_nye
