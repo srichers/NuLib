@@ -313,10 +313,12 @@ program make_table_example
                          eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
+                 if (.not. do_transport_opacities) then
                  if (local_delta(ns,ng).ne.local_delta(ns,ng)) then
                     write(*,"(a,1P3E18.9,i6,i6)") "We have a NaN in scat delta", &
                          eos_variables(rhoindex),eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
+                 endif
                  endif
                  
                  if (log10(local_emissivity(ns,ng)).ge.300.0d0) then
@@ -337,6 +339,7 @@ program make_table_example
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
                  endif
+                 if (.not. do_transport_opacities) then
                  if (local_delta(ns,ng).gt.1.0d0) then
                     write(*,"(a,1P4E18.9,i6,i6)") "delta > 1", &
                          local_delta(ns,ng),eos_variables(rhoindex), &
@@ -348,6 +351,7 @@ program make_table_example
                          local_delta(ns,ng),eos_variables(rhoindex), &
                          eos_variables(tempindex),eos_variables(yeindex),ns,ng
                     stop
+                 endif
                  endif
               enddo !do ng=1,mytable_number_groups
            enddo !do ns=1,number_output_species
