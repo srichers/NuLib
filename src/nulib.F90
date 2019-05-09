@@ -1154,6 +1154,12 @@ module nulib
       implicit none
       real*8, intent(in) :: k, q1, q2, q3
       real*8 :: kernel
+#ifndef NDEBUG
+      if(abs(q1-q2+q3-k) > (q1+q2+q3+k)*1.d-10) then
+         write(*,*) k, q1, q2, q3
+         error stop "ERROR: passed q2 does not conserve energy"
+      endif
+#endif
       kernel = (nu4_D3(q1,q2,q3,k ) &
            + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k ) &
            + q2 * k           * nu4_D2(q2,k ,q1,q3) &
@@ -1216,6 +1222,12 @@ module nulib
       implicit none
       real*8, intent(in) :: k, q1, q2, q3
       real*8 :: kernel
+#ifndef NDEBUG
+      if(abs(q1-q2+q3-k) > (q1+q2+q3+k)*1.d-10) then
+         write(*,*) k, q1, q2, q3
+         error stop "ERROR: passed q2 does not conserve energy"
+      endif
+#endif
       kernel = (nu4_D3(q1,q2,q3,k )  &
            + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k )  &
            - q1 * k           * nu4_D2(q1,k ,q2,q3)  &
