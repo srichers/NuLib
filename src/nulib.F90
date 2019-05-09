@@ -1142,17 +1142,33 @@ module nulib
 
     end function nu4_D3
 
+
     !!=============================!!
     !! nu+nu <--> nu+nu scattering !!
     !!=============================!!
     ! second line in Blaschke & Cirigliano 2016 Equation 96
     ! technically applicable only in isotropic limit
+    ! input in units of MeV
+    ! output in units of cm^5
+    function nu4scat_kernel_single(k, q1, q2, q3) result(kernel)
+      implicit none
+      real*8, intent(in) :: k, q1, q2, q3
+      real*8 :: kernel
+      kernel = (nu4_D3(q1,q2,q3,k ) &
+           + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k ) &
+           + q2 * k           * nu4_D2(q2,k ,q1,q3) &
+           + q1 * q3          * nu4_D2(q1,q3,q2,k ) )&
+           / (q1 * q3 * k)**2 &
+           * pi * Gfermi**2 * hbarc_mevcm**5
+    end function nu4scat_kernel_single
+
     subroutine nu4scat_kernel(nu4scattable)
       implicit none
 
       real*8, dimension(:,:,:), intent(out) :: nu4scattable
       integer :: ik, i1, i2, i3
       real*8  ::  k, q1, q2, q3
+      real*8 :: V1, V3 ! phase-space volumes (cm^-3)
       real*8 :: D1, D2, D3 ! function declarations
 
       nu4scattable = 0.
@@ -1164,21 +1180,20 @@ module nulib
          endif
          do i1=1,number_groups
             q1 = energies(i1)
+            V1 = 4.*pi * (bin_top(i1)**3 - bin_bottom(i1)**3)/3. / (2.*pi * hbarc_mevcm)**3
+            
             do i3=1,number_groups
                q3 = energies(i3)
-
+               V3 = 4.*pi * (bin_top(i3)**3 - bin_bottom(i3)**3)/3. / (2.*pi * hbarc_mevcm)**3
+               
                ! group of neutrino 2
                ! Assumes even energy spacing
                i2 = i1+i3-ik
 
-               ! result is MeV^5
+               ! result is 1/cm
                if (i2>0 .and. i2<=number_groups) then
                   q2 = energies(i2)
-                  nu4scattable(i3,i1,ik) = (nu4_D3(q1,q2,q3,k ) &
-                       + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k ) &
-                       + q2 * k           * nu4_D2(q2,k ,q1,q3) &
-                       + q1 * q3          * nu4_D2(q1,q3,q2,k ) )&
-                       * bin_widths(i1) * bin_widths(i3) / k**2
+                  nu4scattable(i3,i1,ik) = nu4scat_kernel_single(k, q1, q2, q3) * V1*V3
                   if(nu4scattable(i3,i1,ik)<0) then
                      write(*,*) ik, i1, i2, i3, nu4scattable(i3,i1,ik)
                      stop "nu4scattable value less than 0"
@@ -1190,9 +1205,6 @@ module nulib
          end do
       end do
 
-      ! convert to 1/cm
-      nu4scattable = nu4scattable * 2. * Gfermi**2 / (2.*pi)**3 / hbarc_mevcm
-
     end subroutine nu4scat_kernel
 
     !!=====================================!!
@@ -1200,12 +1212,25 @@ module nulib
     !!=====================================!!
     ! fourth line in Blaschke & Cirigliano 2016 Equation 96
     ! technically applicable only in isotropic limit
+    function nu4pair_kernel_single(k, q1, q2, q3) result(kernel)
+      implicit none
+      real*8, intent(in) :: k, q1, q2, q3
+      real*8 :: kernel
+      kernel = (nu4_D3(q1,q2,q3,k )  &
+           + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k )  &
+           - q1 * k           * nu4_D2(q1,k ,q2,q3)  &
+           - q2 * q3          * nu4_D2(q2,q3,q1,k ) )&
+           / (q1 * q3 * k)**2 &
+           * pi * Gfermi**2 * hbarc_mevcm**5
+    end function nu4pair_kernel_single
+
     subroutine nu4pair_kernel(nu4pairtable)
       implicit none
 
       real*8, dimension(:,:,:), intent(out) :: nu4pairtable
       integer :: ik, i1, i2, i3
       real*8  ::  k, q1, q2, q3
+      real*8 :: V1, V3 ! phase-space volumes (cm^-3)
       real*8 :: D1, D2, D3 ! function declarations
 
       nu4pairtable = 0.
@@ -1217,21 +1242,19 @@ module nulib
          endif
          do i1=1,number_groups
             q1 = energies(i1)
+            V1 = 4.*pi * (bin_top(i1)**3 - bin_bottom(i1)**3)/3. / (2.*pi * hbarc_mevcm)**3
             do i3=1,number_groups
                q3 = energies(i3)
+               V3 = 4.*pi * (bin_top(i3)**3 - bin_bottom(i3)**3)/3. / (2.*pi * hbarc_mevcm)**3
 
                ! group of neutrino 2
                ! Assumes even energy spacing
                i2 = i1+i3-ik
 
-               ! result is MeV^5
+               ! result is 1/cm
                if (i2>0 .and. i2<=number_groups) then
                   q2 = energies(i2)
-                  nu4pairtable(i3,i1,ik) = (nu4_D3(q1,q2,q3,k )  &
-                       + q1 * q2 * q3 * k * nu4_D1(q1,q2,q3,k )  &
-                       - q1 * k           * nu4_D2(q1,k ,q2,q3)  &
-                       - q2 * q3          * nu4_D2(q2,q3,q1,k ) )&
-                       * bin_widths(i1) * bin_widths(i3) / k**2
+                  nu4pairtable(i3,i1,ik) = nu4pair_kernel_single(k, q1, q2, q3) * V1*V3
                   if(nu4pairtable(i3,i1,ik)<0) then
                      write(*,*) ik, i1, i2, i3, nu4pairtable(i3,i1,ik)
                      stop "nu4pairtable value less than 0"
@@ -1242,9 +1265,6 @@ module nulib
             end do
          end do
       end do
-
-      ! convert to 1/cm
-      nu4pairtable = nu4pairtable * 2. * Gfermi**2 / (2.*pi)**3 / hbarc_mevcm
 
     end subroutine nu4pair_kernel
  end module nulib
