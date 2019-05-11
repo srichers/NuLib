@@ -1030,7 +1030,7 @@ module nulib
       q4 = min(qin3,qin4)
 
       ! Case 1 (Eqns. D4)
-      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+      if(q1+q2 >= q3+q4 .and. q1+q4>=q2+q3) then
          if(q1<=q2+q3+q4) then
             D1 = 1./2.  * (q2+q3+q4-q1)
          else
@@ -1038,11 +1038,11 @@ module nulib
          end if
 
          ! Case 2 (Eqns. D5)
-      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+      else if (q1+q2 >= q3+q4 .and. q1+q4<=q2+q3) then
          D1 = q4
 
          ! Case 3 (Eqns. D6)
-      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+      else if(q1+q2<=q3+q4 .and. q1+q4<=q2+q3) then
          if(q3<=q1+q2+q4) then
             D1 =1./2. * (q1+q2+q4-q3)
          else
@@ -1071,7 +1071,7 @@ module nulib
       q4 = min(qin3,qin4)
 
       ! Case 1 (Eqns. D4)
-      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+      if(q1+q2 >= q3+q4 .and. q1+q4>=q2+q3) then
          if(q1<=q2+q3+q4) then
             D2 = 1./12. * ((q1-q2)**3 + 2.*(q3**3+q4**3) &
                  -3.*(q1-q2)*(q3**2+q4**2))
@@ -1080,11 +1080,11 @@ module nulib
          end if
 
          ! Case 2 (Eqns. D5)
-      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+      else if (q1+q2 >= q3+q4 .and. q1+q4<=q2+q3) then
          D2 = q4**3/3.
 
          ! Case 3 (Eqns. D6)
-      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+      else if(q1+q2<=q3+q4 .and. q1+q4<=q2+q3) then
          if(q3<=q1+q2+q4) then
             D2 = 1./12. * (-(q1+q2)**3 - 2.*q3**3 + 2.*q4**3 &
                  + 3.*(q1+q2)*(q3**2+q4**2))
@@ -1116,7 +1116,7 @@ module nulib
       q4 = min(qin3,qin4)
 
       ! Case 1 (Eqns. D4)
-      if(q1+q2 > q3+q4 .and. q1+q4>q2+q3) then
+      if(q1+q2 >= q3+q4 .and. q1+q4>=q2+q3) then
          if(q1<=q2+q3+q4) then
             D3 = nu4_D4c(q1,q2,q3,q4)
          else
@@ -1124,11 +1124,11 @@ module nulib
          end if
 
          ! Case 2 (Eqns. D5)
-      else if (q1+q2 > q3+q4 .and. q1+q4<q2+q3) then
+      else if (q1+q2 >= q3+q4 .and. q1+q4<=q2+q3) then
          D3 = q4**3/30. * (5.*q1**2 + 5.*q2**2 + 5.*q3**2 - q4**2)
 
          ! Case 3 (Eqns. D6)
-      else if(q1+q2<q3+q4 .and. q1+q4<q2+q3) then
+      else if(q1+q2<=q3+q4 .and. q1+q4<=q2+q3) then
          if(q3<=q1+q2+q4) then
             D3 = nu4_D4c(q3,q4,q1,q2)
          else
