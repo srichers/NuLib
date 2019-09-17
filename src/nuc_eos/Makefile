@@ -1,11 +1,13 @@
 include ../../make.inc
 
-SOURCES=eosmodule.F90 readtable.F90 nuc_eos.F90 bisection.F90 findtemp.F90 findrho.F90 linterp_many.F90
+SOURCES=readtable.F90 nuc_eos.F90 bisection.F90 findtemp.F90 findrho.F90 linterp_many.F90
 FSOURCES=linterp.f
+MODULE_SOURCES=eosmodule.F90 
 
 CLEANSTUFF=rm -rf *.o *.mod *.a driver
 
 OBJECTS=$(SOURCES:.F90=.o)
+MODULES=$(MODULE_SOURCES:.F90=.o)
 FOBJECTS=$(FSOURCES:.f=.o)
 
 EXTRADEPS=
@@ -20,7 +22,10 @@ driver: nuc_eos.a driver.F90
 nuc_eos.a: $(OBJECTS) $(FOBJECTS)
 	ar r nuc_eos.a *.o
 
-$(OBJECTS): %.o: %.F90 $(EXTRADEPS)
+$(MODULES): %.o: %.F90 $(EXTRADEPS)
+	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) -c $< -o $@
+
+$(OBJECTS): %.o: %.F90 $(EXTRADEPS) $(MODULES)
 	$(F90) $(F90FLAGS) $(DEFS) $(MODINC) -c $< -o $@
 
 $(FOBJECTS): %.o: %.f $(EXTRADEPS)
